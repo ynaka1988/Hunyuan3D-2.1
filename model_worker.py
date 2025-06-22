@@ -26,6 +26,7 @@ except Exception as e:
 from hy3dshape import Hunyuan3DDiTFlowMatchingPipeline
 from hy3dshape.rembg import BackgroundRemover
 from hy3dshape.utils import logger
+from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
 
 
 def load_image_from_base64(image):
@@ -80,6 +81,15 @@ class ModelWorker:
         
         # Initialize shape generation pipeline (matching demo.py)
         self.pipeline = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(model_path)
+        
+        # Initialize texture generation pipeline (matching demo.py)
+        max_num_view = 6  # can be 6 to 9
+        resolution = 512  # can be 768 or 512
+        conf = Hunyuan3DPaintConfig(max_num_view, resolution)
+        conf.realesrgan_ckpt_path = "hy3dpaint/ckpt/RealESRGAN_x4plus.pth"
+        conf.multiview_cfg_path = "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml"
+        conf.custom_pipeline = "hy3dpaint/hunyuanpaintpbr"
+        self.paint_pipeline = Hunyuan3DPaintPipeline(conf)
             
     def get_queue_length(self):
         """
@@ -140,13 +150,32 @@ class ModelWorker:
             logger.error(f"Shape generation failed: {e}")
             raise ValueError(f"Failed to generate 3D mesh: {str(e)}")
 
-        # Export final mesh without texture
+        # Export initial mesh without texture
         file_type = params.get('type', 'glb')
-        save_path = os.path.join(self.save_dir, f'{str(uid)}.{file_type}')
-        mesh.export(save_path)
+        initial_save_path = os.path.join(self.save_dir, f'{str(uid)}_initial.{file_type}')
+        mesh.export(initial_save_path)
+        
+        # Generate textured mesh (matching demo.py)
+        try:
+            output_mesh_path = os.path.join(self.save_dir, f'{str(uid)}_textured.{file_type}')
+            textured_path = self.paint_pipeline(
+                mesh_path=initial_save_path,
+                image_path=image,
+                output_mesh_path=output_mesh_path
+            )
+            logger.info("---Texture generation takes %s seconds ---" % (time.time() - start_time))
+            
+            # Use the textured GLB as the final output
+            final_save_path = textured_path.replace('.obj', '.glb') if textured_path.endswith('.obj') else textured_path
+            
+        except Exception as e:
+            logger.error(f"Texture generation failed: {e}")
+            # Fall back to untextured mesh if texture generation fails
+            final_save_path = initial_save_path
+            logger.warning(f"Using untextured mesh as fallback: {final_save_path}")
 
         if self.low_vram_mode:
             torch.cuda.empty_cache()
             
         logger.info("---Total generation takes %s seconds ---" % (time.time() - start_time))
-        return save_path, uid 
+        return final_save_path, uid 
