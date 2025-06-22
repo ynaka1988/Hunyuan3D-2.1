@@ -164,20 +164,32 @@ async def status(uid: str):
     Returns:
         StatusResponse: Current status of the task and result if completed
     """
-    save_file_path = os.path.join(SAVE_DIR, f'{uid}.glb')
-    print(save_file_path, os.path.exists(save_file_path))
-    if not os.path.exists(save_file_path):
-        response = {'status': 'processing'}
-        return JSONResponse(response, status_code=200)
-    else:
+    # Check for textured file first (preferred output)
+    textured_file_path = os.path.join(SAVE_DIR, f'{uid}_textured.glb')
+    initial_file_path = os.path.join(SAVE_DIR, f'{uid}_initial.glb')
+    
+    print(f"Checking files: {textured_file_path} ({os.path.exists(textured_file_path)}), {initial_file_path} ({os.path.exists(initial_file_path)})")
+    
+    # If textured file exists, generation is complete
+    if os.path.exists(textured_file_path):
         try:
-            base64_str = base64.b64encode(open(save_file_path, 'rb').read()).decode()
+            base64_str = base64.b64encode(open(textured_file_path, 'rb').read()).decode()
             response = {'status': 'completed', 'model_base64': base64_str}
             return JSONResponse(response, status_code=200)
         except Exception as e:
-            logger.error(f"Error reading file {save_file_path}: {e}")
+            logger.error(f"Error reading file {textured_file_path}: {e}")
             response = {'status': 'error', 'message': 'Failed to read generated file'}
             return JSONResponse(response, status_code=500)
+    
+    # If only initial file exists, texturing is in progress
+    elif os.path.exists(initial_file_path):
+        response = {'status': 'texturing'}
+        return JSONResponse(response, status_code=200)
+    
+    # If no files exist, still processing
+    else:
+        response = {'status': 'processing'}
+        return JSONResponse(response, status_code=200)
 
 
 if __name__ == "__main__":
