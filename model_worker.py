@@ -27,6 +27,16 @@ from hy3dshape import Hunyuan3DDiTFlowMatchingPipeline
 from hy3dshape.rembg import BackgroundRemover
 from hy3dshape.utils import logger
 from textureGenPipeline import Hunyuan3DPaintPipeline, Hunyuan3DPaintConfig
+from hy3dpaint.convert_utils import create_glb_with_pbr_materials
+
+
+def quick_convert_with_obj2gltf(obj_path: str, glb_path: str):
+    textures = {
+        'albedo': obj_path.replace('.obj', '.jpg'),
+        'metallic': obj_path.replace('.obj', '_metallic.jpg'),
+        'roughness': obj_path.replace('.obj', '_roughness.jpg')
+        }
+    create_glb_with_pbr_materials(obj_path, textures, glb_path)
 
 
 def load_image_from_base64(image):
@@ -90,6 +100,9 @@ class ModelWorker:
         conf.multiview_cfg_path = "hy3dpaint/cfgs/hunyuan-paint-pbr.yaml"
         conf.custom_pipeline = "hy3dpaint/hunyuanpaintpbr"
         self.paint_pipeline = Hunyuan3DPaintPipeline(conf)
+        # clean cache in save_dir
+        for file in os.listdir(self.save_dir):
+            os.remove(os.path.join(self.save_dir, file))
             
     def get_queue_length(self):
         """
@@ -129,7 +142,7 @@ class ModelWorker:
             tuple: (file_path, uid) - Path to generated file and task ID
         """
         start_time = time.time()
-        
+        logger.info(f"Generating 3D model for uid: {uid}")
         # Handle input image
         if 'image' in params:
             image = params["image"]
@@ -137,12 +150,12 @@ class ModelWorker:
         else:
             raise ValueError("No input image provided")
 
-        # Convert to RGBA and remove background if needed (matching demo.py)
+        # Convert to RGBA and remove background if needed
         image = image.convert("RGBA")
         if image.mode == "RGB":
             image = self.rembg(image)
 
-        # Generate mesh using the same simple approach as demo.py
+        # Generate mesh 
         try:
             mesh = self.pipeline(image=image)[0]
             logger.info("---Shape generation takes %s seconds ---" % (time.time() - start_time))
@@ -151,22 +164,35 @@ class ModelWorker:
             raise ValueError(f"Failed to generate 3D mesh: {str(e)}")
 
         # Export initial mesh without texture
-        file_type = params.get('type', 'glb')
-        initial_save_path = os.path.join(self.save_dir, f'{str(uid)}_initial.{file_type}')
+        
+        initial_save_path = os.path.join(self.save_dir, f'{str(uid)}_initial.glb')
         mesh.export(initial_save_path)
         
-        # Generate textured mesh (matching demo.py)
+        # Generate textured mesh as obj ( as in demo )
         try:
-            output_mesh_path = os.path.join(self.save_dir, f'{str(uid)}_textured.{file_type}')
-            textured_path = self.paint_pipeline(
+            output_mesh_path_obj = os.path.join(self.save_dir, f'{str(uid)}_texturing.obj')
+            textured_path_obj = self.paint_pipeline(
                 mesh_path=initial_save_path,
                 image_path=image,
-                output_mesh_path=output_mesh_path
+                output_mesh_path=output_mesh_path_obj,
+                save_glb=False            
             )
             logger.info("---Texture generation takes %s seconds ---" % (time.time() - start_time))
-            
+            logger.info(f"output_mesh_path: {output_mesh_path_obj} textured_path: {textured_path_obj}")
             # Use the textured GLB as the final output
-            final_save_path = textured_path.replace('.obj', '.glb') if textured_path.endswith('.obj') else textured_path
+            #final_save_path = os.path.join(self.save_dir, f'{str(uid)}_textured.{file_type}')
+            #os.rename(output_mesh_path, final_save_path)
+
+            # Convert textured OBJ to GLB using obj2gltf with PBR support
+            print("convert textured OBJ to GLB")
+            glb_path_textured = os.path.join(self.save_dir, f'{str(uid)}_texturing.glb')
+            quick_convert_with_obj2gltf(textured_path_obj, glb_path_textured)
+            # now rename glb_path to uid_textured.glb
+            print("done.")
+            final_save_path = os.path.join(self.save_dir, f'{str(uid)}_textured.glb')
+            os.rename(glb_path_textured, final_save_path)
+            print(f"final_save_path: {final_save_path}")
+
             
         except Exception as e:
             logger.error(f"Texture generation failed: {e}")

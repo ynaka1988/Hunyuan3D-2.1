@@ -56,10 +56,6 @@ class GenerationRequest(BaseModel):
         ge=1000,
         le=100000
     )
-    type: Literal["glb", "obj"] = Field(
-        "glb",
-        description="Output file format"
-    )
 
 
 class GenerationResponse(BaseModel):
