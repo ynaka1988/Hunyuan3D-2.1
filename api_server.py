@@ -168,7 +168,7 @@ async def status(uid: str):
     textured_file_path = os.path.join(SAVE_DIR, f'{uid}_textured.glb')
     initial_file_path = os.path.join(SAVE_DIR, f'{uid}_initial.glb')
     
-    print(f"Checking files: {textured_file_path} ({os.path.exists(textured_file_path)}), {initial_file_path} ({os.path.exists(initial_file_path)})")
+    #print(f"Checking files: {textured_file_path} ({os.path.exists(textured_file_path)}), {initial_file_path} ({os.path.exists(initial_file_path)})")
     
     # If textured file exists, generation is complete
     if os.path.exists(textured_file_path):
@@ -198,20 +198,17 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8081)
     parser.add_argument("--model_path", type=str, default='tencent/Hunyuan3D-2.1')
     parser.add_argument("--subfolder", type=str, default='hunyuan3d-dit-v2-1')
-    parser.add_argument("--tex_model_path", type=str, default='tencent/Hunyuan3D-2.1')
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--limit-model-concurrency", type=int, default=5)
-    parser.add_argument('--enable_tex', action='store_true')
     parser.add_argument('--low_vram_mode', action='store_true')
     parser.add_argument('--cache-path', type=str, default='./gradio_cache')
-    parser.add_argument('--mc_algo', type=str, default='mc')
-    parser.add_argument('--compile', action='store_true')
     args = parser.parse_args()
     logger.info(f"args: {args}")
 
     # Update SAVE_DIR based on cache-path argument
     SAVE_DIR = args.cache_path
     os.makedirs(SAVE_DIR, exist_ok=True)
+    
 
     model_semaphore = asyncio.Semaphore(args.limit_model_concurrency)
 
