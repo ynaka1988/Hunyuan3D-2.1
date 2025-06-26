@@ -1,6 +1,6 @@
 name: "HunyuanDiT flowmatching; VAE: 4096 token length; ImageEncoder: DINO-v2 Large; ImageSize: 518"
-# oversitting successfully cost 68G memory under current settings
-# you can adjust model arch or batch_size according to your GPU memory
+# Overfitting successfully cost 68G memory under current settings
+# You can adjust model arch or batch_size according to your GPU memory
 
 training:
   steps: 10_0000_0000
