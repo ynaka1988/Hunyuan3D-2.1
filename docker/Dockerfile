@@ -105,4 +105,6 @@ RUN rm -f /workspace/*.zip && \
     rm -rf /var/lib/apt/lists/*
 
 # Set default command
-CMD ["/bin/bash"]
+WORKDIR /workspace/Hunyuan3D-2.1
+RUN mkdir gradio_cache
+CMD ["python", "api_server.py"]
