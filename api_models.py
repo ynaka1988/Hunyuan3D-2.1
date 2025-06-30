@@ -10,7 +10,7 @@ class GenerationRequest(BaseModel):
     image: str = Field(
         ..., 
         description="Base64 encoded input image for 3D generation",
-        example="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        example="iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEElEQVR4nGP8z4AATAxEcQAz0QEHOoQ+uAAAAABJRU5ErkJggg=="
     )
     remove_background: bool = Field(
         True,
