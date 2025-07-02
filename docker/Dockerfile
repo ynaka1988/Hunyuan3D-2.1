@@ -53,8 +53,8 @@ RUN conda install -c conda-forge libstdcxx-ng -y
 
 RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 
-# Clone Hunyuan3D-2.1 repository
-RUN git clone https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1.git
+# Clone Hunyuan3D-2.1 repository clone with out api_server 
+RUN git clone https://github.com/perfectproducts/Hunyuan3D-2.1.git
 
 # Install Python dependencies from modified requirements.txt
 RUN pip install -r Hunyuan3D-2.1/requirements.txt
@@ -105,4 +105,6 @@ RUN rm -f /workspace/*.zip && \
     rm -rf /var/lib/apt/lists/*
 
 # Set default command
-CMD ["/bin/bash"]
+WORKDIR /workspace/Hunyuan3D-2.1
+RUN mkdir gradio_cache
+CMD ["python", "api_server.py"]
