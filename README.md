@@ -106,9 +106,7 @@ pip install -r requirements.txt
 cd hy3dpaint/custom_rasterizer
 pip install --no-build-isolation .
 cd ../..
-cd hy3dpaint/DifferentiableRenderer
-bash compile_mesh_painter.sh
-cd ../..
+python3 hy3dpaint/DifferentiableRenderer/setup.py build_ext --inplace
 
 wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P hy3dpaint/ckpt
 ```
