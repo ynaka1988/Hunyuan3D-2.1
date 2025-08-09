@@ -92,14 +92,15 @@ It takes 10 GB VRAM for shape generation, 21GB for texture generation and 29GB f
 Hunyuan3D 2.1 supports Macos, Windows, Linux. You may follow the next steps to use Hunyuan3D 2.1 via:
 
 ### Install Requirements
-We test our model with Python 3.10 and PyTorch 2.5.1+cu124.
+We test our model with Python 3.10 and PyTorch +cu124.
 ```bash
 sudo apt install -y python3.10-venv python3.10-distutils python3.10-dev build-essential cmake
 python3.10 -m venv venv310
 source venv310/bin/activate
 
 pip install --upgrade pip setuptools wheel
-pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+pip install mmgp
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 pip install bpy==4.0 --extra-index-url https://download.blender.org/pypi/
 pip install -r requirements.txt
 
