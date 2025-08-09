@@ -760,6 +760,7 @@ if __name__ == '__main__':
     parser.add_argument('--mc_algo', type=str, default='mc')
     parser.add_argument('--cache-path', type=str, default='./save_dir')
     parser.add_argument('--enable_t23d', action='store_true')
+    parser.add_argument('--profile', type=str, default="2")
     parser.add_argument('--disable_tex', action='store_true')
     parser.add_argument('--enable_flashvdm', action='store_true')
     parser.add_argument('--compile', action='store_true')
@@ -864,10 +865,10 @@ if __name__ == '__main__':
     if args.compile:
         i23d_worker.compile()
 
+    profile = int(args.profile)
     floater_remove_worker = FloaterRemover()
     degenerate_face_remove_worker = DegenerateFaceRemover()
     face_reduce_worker = FaceReducer()
-    profile = 2
     kwargs = {}
     replace_property_getter(i23d_worker, "_execution_device", lambda self : "cuda")
     pipe = offload.extract_models("i23d_worker", i23d_worker)
